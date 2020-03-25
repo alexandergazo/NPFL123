@@ -1,0 +1,11 @@
+# So far, this is just NLU test for the Czech public transport
+# domain from Alex (https://github.com/UFAL-DSG/alex).
+---
+logging_level: "DEBUG"
+user_stream: "dialmonkey.input.console_input.ConsoleInput"
+components:
+  - "dialmonkey.nlu.public_transport_cs.PublicTransportCSNLU"
+  - "dialmonkey.policy.dummy.ReplyWithNLU"
+break_words:
+  - "quit"
+  - "exit"
