@@ -3,7 +3,7 @@
 ---
 logging_level: "DEBUG"
 components:
-  - "dialmonkey.nlu.public_transport_cs.PublicTransportCSNLU"
+  - "dialmonkey.nlu.public_transport_cs.PublicTransportCSNLU": {}
   - "dialmonkey.policy.dummy.ReplyWithNLU"
 break_words:
   - "quit"

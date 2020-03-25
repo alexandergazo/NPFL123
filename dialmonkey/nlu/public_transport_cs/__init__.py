@@ -15,8 +15,8 @@ from .string_func import TokenList
 class PublicTransportCSNLU(Component):
 
     def __init__(self, cfg):
-        if 'utt2da' in cfg:
-            self.utt2da = self._load_utt2da(['utt2da'])
+        if cfg and 'utt2da' in cfg:
+            self.utt2da = self._load_utt2da(['utt2da'])  # TODO fix paths here
         else:
             self.utt2da = {}
         self.cldb = CategoryLabelDatabase(database)
