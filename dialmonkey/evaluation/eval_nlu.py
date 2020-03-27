@@ -1,21 +1,28 @@
+#!/usr/bin/env python3
+
 import os
 import json
 import argparse
 
-from dialmonkey.da import DA
+import sys
+# add the main project path to import path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+from dialmonkey.da import DA  # noqa: E402
 
 
-class Evaluator:
-    def __init__(self, reference, predictions):
-        self.reference = reference
-        self.predictions = predictions
+class DAIFScore:
+
+    def __init__(self):
         self.epsilon = .000000000001
+        self.clear()
+
+    def clear(self):
         self.tp = self.tn = 0
         self.fp = self.fn = 0
 
-    def evaluate(self):
-        assert len(self.reference) == len(self.predictions), 'Predictions length does not match the reference length.'
-        for ref, pred in zip(self.reference, self.predictions):
+    def add_instances(self, reference, predictions):
+        assert len(reference) == len(predictions), 'Predictions length does not match the reference length.'
+        for ref, pred in zip(reference, predictions):
 
             for ref_dai in ref.dais:
                 found = any([ref_dai == pred_dai for pred_dai in pred.dais])
@@ -60,8 +67,8 @@ def main(args):
     with open(args.predictions, 'rt') as fd:
         predicted_data = [DA.parse_cambridge_da(line.strip()) for line in fd]
 
-    evaluator = Evaluator(reference_data, predicted_data)
-    evaluator.evaluate()
+    evaluator = DAIFScore
+    evaluator.add_instances(reference_data, predicted_data)
     print(evaluator)
 
 
