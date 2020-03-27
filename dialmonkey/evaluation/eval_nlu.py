@@ -67,14 +67,14 @@ def main(args):
     with open(args.predictions, 'rt') as fd:
         predicted_data = [DA.parse_cambridge_da(line.strip()) for line in fd]
 
-    evaluator = DAIFScore
+    evaluator = DAIFScore()
     evaluator.add_instances(reference_data, predicted_data)
     print(evaluator)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--reference', type=str, required=True)
-    parser.add_argument('--predictions', type=str, required=True)
+    parser.add_argument('-r', '--reference', '--ref', type=str, required=True)
+    parser.add_argument('-p', '--predictions', '--pred', type=str, required=True)
     args = parser.parse_args()
     main(args)
