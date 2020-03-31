@@ -95,13 +95,14 @@ class PublicTransportCSNLU(Component):
         """
 
         # regular parsing
-        phr_wp_types = [('from', set(['z', 'za', 'ze', 'od', 'začátek', 'začáteční',
-                                      'počáteční', 'počátek', 'výchozí', 'start', 'stojím na',
-                                      'jsem na', 'start na', 'stojím u', 'jsem u', 'start u',
-                                      'začátek na', 'začátek u'])),
-                        ('to', set(['k', 'do', 'konec', 'na', 'konečná', 'koncová',
-                                    'cílová', 'cíl', 'výstupní', 'cíl na', 'chci na'])),
-                        ('via', set(['přes', ]))]
+        phr_wp_types = [('from', ['z', 'za', 'ze', 'od', 'začátek na', 'začáteční',
+                                  'počátek na', 'počáteční na', 'výchozí na',
+                                  'počáteční', 'počátek', 'výchozí', 'start na', 'stojím na',
+                                  'jsem na', 'start u', 'stojím u', 'jsem u', 'start',
+                                  'začátek u', 'začátek']),
+                        ('to', ['k', 'do', 'konec', 'na', 'konečná', 'koncová',
+                                'cílová', 'cíl', 'výstupní', 'cíl na', 'chci na']),
+                        ('via', ['přes'])]
 
         self.parse_waypoint(abutterance, cn, 'STOP=', 'stop', phr_wp_types)
 
@@ -113,13 +114,13 @@ class PublicTransportCSNLU(Component):
         """
 
         # regular parsing
-        phr_wp_types = [('from', set(['z', 'ze', 'od', 'začátek', 'začáteční',
-                                      'počáteční', 'počátek', 'výchozí', 'start',
-                                      'jsem v', 'stojím v', 'začátek v'])),
-                        ('to', set(['k', 'do', 'konec', 'na', 'končím',
-                                    'cíl', 'vystupuji', 'vystupuju'])),
-                        ('via', set(['přes', ])),
-                        ('in', set(['pro', 'po'])),
+        phr_wp_types = [('from', ['z', 'ze', 'od', 'začátek', 'začáteční',
+                                  'počáteční', 'počátek', 'výchozí', 'start',
+                                  'jsem v', 'stojím v', 'začátek v']),
+                        ('to', ['k', 'do', 'konec', 'na', 'končím',
+                                'cíl', 'vystupuji', 'vystupuju']),
+                        ('via', ['přes', ]),
+                        ('in', ['pro', 'po']),
                         ]
 
         self.parse_waypoint(abutterance, cn, 'CITY=', 'city', phr_wp_types, phr_in=['v', 've'])
@@ -161,7 +162,7 @@ class PublicTransportCSNLU(Component):
                 wp_types |= self._get_closest_wp_type(wp_precontext)
                 # test short following context (0 = from, 1 = to, 2 = via)
                 if not wp_types:
-                    if u[i:i + 3].any_phrase_in(phr_wp_types[0][1] | phr_wp_types[2][1]):
+                    if u[i:i + 3].any_phrase_in(phr_wp_types[0][1] + phr_wp_types[2][1]):
                         wp_types.add('to')
                     elif u[i:i + 3].any_phrase_in(phr_wp_types[1][1]):
                         wp_types.add('from')
@@ -321,7 +322,7 @@ class PublicTransportCSNLU(Component):
         preps_rel = set(["za", ])
 
         test_context = [('confirm', 'departure',
-                         ['jede to', 'odjíždí to', 'je výchozí', 'má to odjezd', 'je odjezd'],
+                         ['jede to', 'odjíždí to', 'je výchozí', 'má to odjezd', 'je odjezd', 'pojede to'],
                          []),
                         ('confirm', 'arrival',
                          ['přijede to', 'přijíždí to', 'má to příjezd', 'je příjezd'],
@@ -404,15 +405,14 @@ class PublicTransportCSNLU(Component):
         :param abutterance: the input abstract utterance.
         :param da: The output dialogue act item confusion network.
         """
-
         u = abutterance
-
-        confirm = u.phrase_in(['jede', 'to'])
-        deny = u.phrase_in(['nechci', 'ne'])
 
         for i, w in enumerate(u):
             if w.startswith("DATE_REL="):
                 value = w[9:]
+
+                confirm = u[max(i - 5, 0):i].any_phrase_in(['jede to', 'odjíždí to', 'pojede to', 'má to odjezd', 'je odjezd'])
+                deny = u[max(i - 5, 0):i].any_word_in(['nechci', 'ale ne'])
 
                 if confirm:
                     dai = DAI("confirm", 'date_rel', value)
@@ -430,15 +430,13 @@ class PublicTransportCSNLU(Component):
         :param abutterance: the input abstract utterance.
         :param da: The output dialogue act item confusion network.
         """
-
         u = abutterance
-
-        confirm = u.phrase_in(['jede', 'to'])
-        deny = u.phrase_in(['nechci', 'ne'])
 
         for i, w in enumerate(u):
             if w.startswith("AMPM="):
                 value = w[5:]
+                confirm = u[max(i - 5, 0):i].any_phrase_in(['jede to', 'odjíždí to', 'pojede to', 'má to odjezd', 'je odjezd'])
+                deny = u[max(i - 5, 0):i].any_word_in(['nechci', 'ale ne'])
 
                 if not (u.phrase_in('dobrou')):
                     if confirm:
@@ -844,5 +842,6 @@ class PublicTransportCSNLU(Component):
 
             self.parse_meta(utterance, abutterance_lenghts, res_da)
 
+        res_da.merge_duplicate_dais()
         dial['nlu'] = res_da
         return dial
