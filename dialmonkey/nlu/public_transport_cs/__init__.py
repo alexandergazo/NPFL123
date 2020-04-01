@@ -58,23 +58,23 @@ class PublicTransportCSNLU(Component):
             end = len(utterance)
             while end > start:
                 f = tuple(utterance[start:end])
-                # print start, end
-                # print f
 
+                # found a form
                 if f in self.cldb.form2value2cl:
+                    # use the 1st matching value (XXX there's no good way of disambiguating)
                     for v in self.cldb.form2value2cl[f]:
-                        for c in self.cldb.form2value2cl[f][v]:
-                            abs_utts = abs_utts.replace(list(f), [c.upper() + '=' + v])
-                            abs_utt_lengths[start] = len(f)
-                            category_labels.add(c.upper())
-                            break
-                        else:
+                        # get the categories
+                        c = self.cldb.form2value2cl[f][v]
+                        if not c:  # no categories -- shouldn't happen
                             continue
-
+                        elif len(c) > 1:  # ambiguous categories -- try disambiguating
+                            c = self.disambiguate_category(utterance, start, end, c)
+                        else:
+                            c = c[0]
+                        abs_utts = abs_utts.replace(list(f), [c.upper() + '=' + v])
+                        abs_utt_lengths[start] = len(f)
+                        category_labels.add(c.upper())
                         break
-
-                    # print f
-
                     # skip all substring for this form
                     start = end
                     break
@@ -89,6 +89,26 @@ class PublicTransportCSNLU(Component):
             norm_abs_utt_lengths.append(le)
             i += le
         return abs_utts, category_labels, norm_abs_utt_lengths
+
+    def disambiguate_category(self, utterance, start, end, categories):
+        """Disambiguate categories -- stop/city, stop/train or city/train
+        by context, default to 1st one in other cases (which shouldn't happen).
+        """
+        if sorted(categories) == ['city', 'stop']:
+            if utterance[max(0, start - 2):start].any_word_in(
+                    ['zastávka', 'zastávky', 'zastávku', 'zastávce',
+                     'zastávkou', 'stanice', 'stanici', 'stanicí']):
+                return 'stop'
+            return 'city'
+        if 'train_name' in categories and ('city' in categories or 'stop' in categories):
+            if utterance[max(0, start - 1):start].any_word_in(
+                    ['vlak', 'vlakem', 'vlaku', 'vlaky', 'vlaků', 'vlakům', 'vlacích',
+                     'jet', 'jedu', 'jede', 'pojede', 'jezdí', 'jezdit', 'jel', 'ujel',
+                     'jela', 'ujela', 'pojedu', 'jelo', 'ujelo']):
+                return 'train_name'
+            return sorted(categories)[0]
+        else:
+            return categories[0]
 
     def parse_stop(self, abutterance, cn):
         """ Detects stops in the input abstract utterance.
