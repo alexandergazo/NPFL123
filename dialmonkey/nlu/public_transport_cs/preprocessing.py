@@ -3,19 +3,6 @@
 from collections import defaultdict
 
 
-class nesteddict(defaultdict):
-    def __init__(self):
-        defaultdict.__init__(self, nesteddict)
-
-    def walk(self):
-        for key, value in self.items():
-            if isinstance(value, nesteddict):
-                for tup in value.walk():
-                    yield (key,) + tup
-                else:
-                    yield key, value
-
-
 _NUMBERS = {0: 'nula', 1: 'jeden', 2: 'dva', 3: 'tři', 4: 'čtyři', 5: 'pět',
             6: 'šest', 7: 'sedm', 8: 'osm', 9: 'devět', 10: 'deset',
             11: 'jedenáct', 12: 'dvanáct', 13: 'třináct', 14: 'čtrnáct',
@@ -146,7 +133,7 @@ class CategoryLabelDatabase(object):
         self.synonym_value_category = []
         self.forms = []
         self.form_value_cl = []
-        self.form2value2cl = nesteddict()
+        self.form2value2cl = {}
 
         self.load(db)
 
@@ -232,19 +219,17 @@ class CategoryLabelDatabase(object):
 
     def gen_mapping_form2value2cl(self):
         """
-        Generates an list of form, value, category label tuples from the database . This list is ordered where the tuples
-        with the longest surface forms are at the beginning of the list.
+        Generates a form -> value -> category labels mapping from the database and
+        stores it in self.form2value2cl.
 
         :return: none
         """
-
         for cl in self.database:
             for value in self.database[cl]:
                 for form in self.database[cl][value]:
-                    self.form2value2cl[form][value][cl] = 1
-                    self.forms.append(form)
-
-        self.forms.sort(key=lambda f: len(f), reverse=True)
+                    self.form2value2cl[form] = self.form2value2cl.get(form, {})
+                    self.form2value2cl[form][value] = self.form2value2cl[form].get(value, [])
+                    self.form2value2cl[form][value].append(cl)
 
 
 class Preprocessing(object):
