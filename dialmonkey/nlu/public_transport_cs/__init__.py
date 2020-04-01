@@ -2,7 +2,7 @@
 # encoding: utf8
 
 import copy
-import codecs
+import os
 from ast import literal_eval
 
 from ...component import Component
@@ -12,12 +12,15 @@ from .preprocessing import CategoryLabelDatabase, Preprocessing
 from .string_func import TokenList
 
 
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../data/public_transport_cs")
+
+
 class PublicTransportCSNLU(Component):
 
     def __init__(self, config):
         super(PublicTransportCSNLU, self).__init__(config)
         if config and 'utt2da' in config:
-            self.utt2da = self._load_utt2da(['utt2da'])  # TODO fix paths here
+            self.utt2da = self._load_utt2da(config['utt2da'])
         else:
             self.utt2da = {}
         self.cldb = CategoryLabelDatabase(database)
@@ -33,11 +36,11 @@ class PublicTransportCSNLU(Component):
         :rtype: dict
         """
         utt2da = {}
-        with codecs.open(filename, 'r', 'UTF-8') as f:
+        with open(os.path.join(DATA_DIR, filename), 'r', encoding='UTF-8') as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
-                    key, val = line.split('\t')
-                    utt2da[str(key)] = val
+                    key, val = line.strip().split('\t')
+                    utt2da[key.lower()] = DA.parse(val)
         return utt2da
 
     def abstract_utterance(self, utterance):
@@ -801,9 +804,10 @@ class PublicTransportCSNLU(Component):
 
         res_da = DA()
 
-        dict_da = self.utt2da.get(str(utterance), None)
+        dict_da = self.utt2da.get(str(utterance).lower(), None)
         if dict_da:
-            return dict_da
+            dial['nlu'] = dict_da
+            return dial
 
         utterance = self.preprocessing.normalize(TokenList(utterance.lower()))
         abutterance, category_labels, abutterance_lenghts = self.abstract_utterance(utterance)
