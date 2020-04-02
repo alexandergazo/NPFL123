@@ -3,11 +3,11 @@
 # and nothing else.
 ---
 logging_level: "DEBUG"
-user_stream: "dialmonkey.input.console_input.ConsoleInput"
+user_stream: "dialmonkey.input.console_input.ConsoleInput" 
 components:
   - "dialmonkey.nlu.solar.SolarSystemNLU"
-  - "dialmonkey.dst.dummy.DummyDST"
-  - "dialmonkey.policy.dummy.DummyPolicy"
+  - "dialmonkey.dst.rule_kulhanek.KulhanekDST"
+  - "dialmonkey.policy.dummy.ReplyWithState"
 break_words:
   - "quit"
   - "exit"
