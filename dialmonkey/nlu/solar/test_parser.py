@@ -38,7 +38,7 @@ def repo():
     from dialmonkey.repositories.solar import SolarRepository
     return SolarRepository()
 
-expression_file = os.path.join(os.path.dirname(__file__), '../../../data/expressions.tsv')
+expression_file = os.path.join(os.path.dirname(__file__), '../../../data/solar-expressions.tsv')
 @pytest.mark.parametrize('input,output', [tuple(x.strip().split('\t')) for x in open(expression_file, 'r') if x.strip() != ''])
 def test_parse(input, output, repo):
     parse = parser.build_parser()

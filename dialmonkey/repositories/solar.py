@@ -7,6 +7,9 @@ class SolarRepository:
         self._bodies = None
         self._details = dict()
         self._gas_giants = ['jupiter', 'saturn','uranus','neptune']
+        self._habitable_bodies = ['earth']
+        self._could_be_habitable = ['earth', 'mars','moon','venus', 'europa']
+        self._human_landed_bodies = ['moon']
         pass 
 
     def bodies(self):
@@ -18,6 +21,10 @@ class SolarRepository:
                     b['planetType'] = 'gas_giant'
                 elif b['isPlanet']:
                     b['planetType'] = 'planet'
+                b['isLife'] = b['englishName'].lower() == 'earth'
+                b['couldSupportLife'] = b['englishName'].lower() in self._could_be_habitable
+                b['humansLanded'] = b['englishName'].lower() in self._human_landed_bodies
+                b['isHabitable'] = b['englishName'].lower() in self._habitable_bodies
         return self._bodies
 
     def body(self, id):
