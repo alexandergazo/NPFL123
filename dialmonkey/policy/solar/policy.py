@@ -69,20 +69,24 @@ class RequestQueryMapper:
     def request_list(self, context):
         last_request = context.try_get_last_count_request()
         if last_request:
-            intent, kwargs = last_request
+            intent, values, state_values = last_request
             intent = intent.replace('count_', 'request_')
-            return self(intent, **kwargs)
+            values.update(context.values)
+            state_values.update(context.values)
+            return self(intent, values, state_values)
         return ('ask', 'what_to_list', None)
 
 
-    def request_life(self, name):
+    def request_life(self, context):
+        name = context.require('name')
         body = self._find_body(name)
         return [('inform', 'name', body['englishName']),
             ('inform', 'life', 'yes' if body['isLife'] else 'no'),
             ('inform', 'habitable', 'yes' if body['isHabitable'] else 'no'),
             ('inform', 'could_support_life', 'yes' if body['couldSupportLife'] else 'no')]
 
-    def request_support_life(self, name):
+    def request_support_life(self, context):
+        name = context.require('name')
         body = self._find_body(name)
         return [('inform', 'name', body['englishName']),
             ('inform', 'life', 'yes' if body['isLife'] else 'no'),
@@ -96,13 +100,15 @@ class RequestQueryMapper:
                 ('inform', 'count', f'{len(habitable)}'),
             ('inform', 'could_support_life', ','.join([x['englishName'] for x in bodies]))]
 
-    def request_humans_landed(self, name):
+    def request_humans_landed(self, context):
+        name = context.require('name')
         body = self._find_body(name)
         return [('inform', 'name', body['englishName']),
                 ('inform', 'humans_landed', 'yes' if body['humansLanded'] else 'no')]
 
     def request(self, context, name = None, filter = None, object = None):
-        if object is None and name is None: context.require('name')
+        if object is None and name is None: 
+            name = context.require('name')
         if name is None:
             bodies = self._repo.bodies()
             if object == 'planet':
@@ -144,7 +150,8 @@ class RequestQueryMapper:
             ]
 
 
-    def request_property(self, name, property):
+    def request_property(self, context, property):
+        name = context.require('name')
         append_info = []
         intent = 'inform'
         body = self._find_body(name)
@@ -160,23 +167,25 @@ class RequestQueryMapper:
         result.extend(append_info)
         return result
     
-    def count_moons(self, name):
+    def count_moons(self, context):
+        name = context.require('name')
         planet = self._find_body(name)
         moons = len(planet['moons']) 
-        return [('inform_moons', 'count', f'{moons}'), ('inform_moons', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
+        return [('inform', 'count', f'{moons}'), ('inform', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
 
-    def request_moons(self, name):
+    def request_moons(self, context):
+        name = context.require('name')
         planet = self._find_body(name)
         moons = len(planet['moons']) 
-        return [('inform_moons', 'count', f'{moons}'), ('inform_moons', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
+        return [('inform', 'count', f'{moons}'), ('inform', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
 
     def _find_body(self, name): 
-        body = [x for x in self._repo.bodies() if x['englishName'] == name]
+        body = [x for x in self._repo.bodies() if x['englishName'].lower() == name]
         if len(body) == 0: raise DirectResponse(('error', 'not_found', None))
         return body[0]
 
 
-    def __call__(self, intent, **kwargs):
+    def __call__(self, intent, values, state_values):
         if not hasattr(self, intent): return None
         method = getattr(self, intent)
         try:
@@ -184,30 +193,33 @@ class RequestQueryMapper:
             required = [x for x,y in parameters.items() if y.default is not None]
             for r in required:
                 if r == 'context': continue
-                if r not in kwargs: raise RequiredSlot(r)
-            kwargs = {k:v for k,v in kwargs.items() if k in parameters }
+                if r not in values: raise RequiredSlot(r)
+            nargs = {k:v for k,v in values.items() if k in parameters }
             if 'context' in parameters:
-                kwargs['context'] = Context(intent, **kwargs)
-            return method(**kwargs) 
+                nargs['context'] = Context(intent, values, state_values)
+            return method(**nargs) 
         except DirectResponse as e:
             return e.value
 
 class Context:
-    def __init__(self, intent, **slotvalues):
+    def __init__(self, intent, values, state_values):
         self.intent = intent
-        self.slotvalues = slotvalues
+        self.values = values
+        self.state_values = state_values
 
-    def require(self, slot):
-        if slot in self.slotvalues: return self.slotvalues[slot]
+    def require(self, slot, allow_state = True):
+        if slot in self.values: return self.values[slot]
+        if allow_state and slot in self.state_values: return self.state_values[slot]
         raise RequiredSlot(slot)
 
-    def try_get(self, slot, default):
-        if slot in self.slotvalues: return self.slotvalues[slot]
+    def try_get(self, slot, default = None, allow_state = True):
+        if slot in self.values: return self.values[slot]
+        if allow_state and slot in self.state_values: return self.state_values[slot]
         return default
 
     def try_get_last_count_request(self):
-        if '_last_count' in self.slotvalues:
-            return self.slotvalues['_last_count']
+        if '_last_count' in self.state_values:
+            return self.state_values['_last_count']
 
 class DirectResponse(BaseException):
     def __init__(self, value):
@@ -229,6 +241,7 @@ class SolarPolicy(Component):
         assert da is not None
         assert isinstance(da, DA)
         assert state is not None
+        if not da.dais: return DA()
 
         dai = [(x.intent, x.confidence) for x in da.dais]
         dai.sort()
@@ -237,9 +250,13 @@ class SolarPolicy(Component):
 
         # We support single intent for now
         intent, _ = dai[0]
-        values = ((k, max((p, v) for v, p in x.items())) for k,x in state.items())
-        values = { k: v for k, (p, v) in values if p > self._treshold and isinstance(k, str) }
-        response = self._mapper(intent, **values)
+        values = { x.slot: x.value for x in da.dais if x.confidence > self._treshold }
+        state_values = ((k, max((p if p is not None else 'none', v if v is not None else 'none') for v, p in x.items())) for k,x in state.items() if k is not None and not k.startswith('_'))
+        state_values = { k: v for k, (p, v) in state_values if p > self._treshold and isinstance(k, str) }
+
+        # Add meta attributes 
+        state_values.update(**{k:x for k,x in state.items() if k is not None and k.startswith('_')})
+        response = self._mapper(intent, values, state_values)
         if response is None: response = list() 
         elif not isinstance(response, list): response = [response]
 
@@ -248,7 +265,7 @@ class SolarPolicy(Component):
         for r in response:
             da.append(DAI(*r))
         if intent.startswith('count_'):
-            state['_last_count'] = (intent, values)
+            state['_last_count'] = (intent, values, state_values)
         return da
 
     def __call__(self, dial: Dialogue, logger):

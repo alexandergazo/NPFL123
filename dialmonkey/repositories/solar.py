@@ -36,4 +36,5 @@ class SolarRepository:
         return dict(
             gravity=('gravity', '%.1fg'),
             radius=('meanRadius', '%.0fkm'),
+            size=('meanRadius', '%.0fkm'),
         )

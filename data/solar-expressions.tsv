@@ -38,9 +38,7 @@ What is its size?	request_property(property=size)
 How many planets are smaller than <object>?	count_planets(filter=smaller,name=<object>)
 How far is <object> from us.	request_distance(name=<object>)
 How long would it take me to get there.	request_travel_time()
-Is there life on <object>?	request_life(name=<object>)
-
-
+Is there life on <object>?	request_life(name=<object>) 
 Thanks, what is the largest planet in the Sun solar system?	request(filter=biggest,object=planet)
 Ok, how many planets are bigger than the planet <object>?	count_planets(filter=bigger,name=<object>)
 how many moons does the planet <object> have?	count_moons(name=<object>)
@@ -55,3 +53,5 @@ Hello, can I ask you something?	greet()
 How many planets are smaller than <object>?	count_planets(filter=smaller,name=<object>)
 What is the smallest planet in the Solar system?	request(filter=smallest,object=planet)
 Thanks, that is all	goodbye(thanks)
+
+how many moons does <object> have?	count_moons(name=<object>)

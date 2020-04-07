@@ -46,21 +46,21 @@ def simplify(x):
     x = ' '.join(words)
 
     x = x.replace('n\'t', ' not').replace('\'m', ' am')
-    x = x.replace('our planet', 'earth')
-    x = x.replace('largest', 'biggest')
-    x = x.replace('larger', 'bigger')
-    x = x.replace('us', 'earth')
+    x = x.replace(' our planet ', ' earth ')
+    x = x.replace(' largest ', ' biggest ')
+    x = x.replace(' larger ', ' bigger ')
+    x = x.replace(' us ', ' earth ')
     return x
 
 # Builds a function which replaces known words with tokens
 def build_tokenize(repo: SolarRepository):
-    objectRegex = re.compile("|".join([re.escape(simplify(x['englishName'])) for x in repo.bodies() if x['englishName']])) 
+    objectRegex = re.compile(r'(?:^|\s)(' + "|".join([re.escape(simplify(x['englishName'])) for x in repo.bodies() if x['englishName']]) + r')(?:$|\s)') 
     def tokenize(x): 
         matches = []
         def map_match(x):
             def fn(match):
-                matches.append(match.group(0))
-                return x
+                matches.append(match.group(1))
+                return match.group(0).replace(match.group(1), x)
             return fn
         x = objectRegex.sub(map_match('<object>'), x)
         return x, matches
@@ -120,7 +120,7 @@ def build_parser():
         # Count moons
         regex_parser(free_start + fr'how many moons{fr} it (?:have|has)' + free_end,lambda **k: 'count_moons()'),
         regex_parser(free_start + fr'how many moons{fr} <object> have' + free_end,lambda **k: 'count_moons(name=<object>)'),
-        regex_parser(free_start + fr'how many moons{fr}' + free_end,lambda **k: 'count_moons()'),
+        regex_parser(free_start + fr'how many moons' + free_end,lambda **k: 'count_moons()'),
 
         # count_planets
         regex_parser(free_start + r'how many planets (?:.*\s|)bigger than (?:.*\s|)<object>' + free_end,lambda **k: 'count_planets(filter=bigger,name=<object>)'),
@@ -169,17 +169,23 @@ def build_parser():
         regex_parser(free_start + rf'(?:ok|goodbye|that is all)' + free_end, 'goodbye()'),
     )
 
-def build_evaluate(repo):
-    parser = build_parser()
-    tokenize = build_tokenize(repo)
-    match_token = re.compile(r'<\w+>')
-    act_regex = re.compile(r'^([\w_]+)\(([^\)]*)\)$')
-    def evaluate(x):
+class SolarSystemNLU(Component):
+    def __init__(self, *args, repo = None, **kwargs):
+        super().__init__(*args,**kwargs)
+        self._repo = repo if repo is not None else SolarRepository()
+        self._parser = build_parser()
+        self._tokenize = build_tokenize(self._repo)
+        self._match_token = re.compile(r'<\w+>')
+        self._act_regex = re.compile(r'^([\w_]+)\(([^\)]*)\)$')
+
+    def _evaluate(self, x, logger):
         x = simplify(x)
-        x, tokens = tokenize(x)
-        x = parser(x)
+        logger.info('NLU: simplified: "%s"' % x)
+        x, tokens = self._tokenize(x)
+        logger.info('NLU: tokenized: "%s"' % x)
+        x = self._parser(x)
         if x is None: return [] # No result
-        match = act_regex.match(x)
+        match = self._act_regex.match(x)
         if len(match.group(2).strip()) == 0: return [(match.group(1), None, None)] # Intent only
 
         results = []
@@ -188,22 +194,15 @@ def build_evaluate(repo):
             slot, value = slotvalue.split('=') if '=' in slotvalue else (slotvalue, None)
 
             # Map tokens back
-            slot = match_token.sub(lambda _: tokens.popleft(), slot)
+            slot = self._match_token.sub(lambda _: tokens.popleft(), slot)
             if value is not None:
-                value = match_token.sub(lambda _: tokens.popleft(), value)
+                value = self._match_token.sub(lambda _: tokens.popleft(), value)
 
             results.append((match.group(1), slot, value))
         return results
-    return evaluate
-
-class SolarSystemNLU(Component):
-    def __init__(self, *args, repo = None, **kwargs):
-        super().__init__(*args,**kwargs)
-        self._repo = repo if repo is not None else SolarRepository()
-        self._evaluate = build_evaluate(self._repo)
 
     def __call__(self, dial, logger):
-        result = self._evaluate(dial['user'])
+        result = self._evaluate(dial['user'], logger)
         dial['nlu'] = DA(list(starmap(DAI, result)))
         logger.info('NLU: %s', str(dial['nlu']))
         return dial

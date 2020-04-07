@@ -6,7 +6,7 @@ from logging import getLogger
 from dialmonkey.dialogue import Dialogue
 from dialmonkey.da import DA, DAI
 
-@pytest.fixture
+@pytest.fixture(scope='module')
 def repo():
     from dialmonkey.repositories.solar import SolarRepository
     return SolarRepository()

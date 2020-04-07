@@ -33,6 +33,17 @@ def test_tokenize():
     assert matches[0] == 'pluto'
     assert matches[1] == 'europa'
 
+def test_tokenize_moons():
+    class DummyRepository:
+        def bodies(self):
+            return [
+                dict(englishName='moon'),
+            ]
+    tokenize = parser.build_tokenize(DummyRepository())
+    result, matches = tokenize('moons')
+    assert result == 'moons'
+    assert len(matches) == 0
+
 @pytest.fixture
 def repo():
     from dialmonkey.repositories.solar import SolarRepository
