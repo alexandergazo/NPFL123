@@ -2,7 +2,7 @@
 # encoding: utf8
 
 import copy
-import codecs
+import os
 from ast import literal_eval
 
 from ...component import Component
@@ -12,12 +12,15 @@ from .preprocessing import CategoryLabelDatabase, Preprocessing
 from .string_func import TokenList
 
 
+DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "../../../data/public_transport_cs")
+
+
 class PublicTransportCSNLU(Component):
 
     def __init__(self, config):
         super(PublicTransportCSNLU, self).__init__(config)
         if config and 'utt2da' in config:
-            self.utt2da = self._load_utt2da(['utt2da'])  # TODO fix paths here
+            self.utt2da = self._load_utt2da(config['utt2da'])
         else:
             self.utt2da = {}
         self.cldb = CategoryLabelDatabase(database)
@@ -33,11 +36,11 @@ class PublicTransportCSNLU(Component):
         :rtype: dict
         """
         utt2da = {}
-        with codecs.open(filename, 'r', 'UTF-8') as f:
+        with open(os.path.join(DATA_DIR, filename), 'r', encoding='UTF-8') as f:
             for line in f:
                 if line.strip() and not line.startswith('#'):
-                    key, val = line.split('\t')
-                    utt2da[str(key)] = val
+                    key, val = line.strip().split('\t')
+                    utt2da[key.lower()] = DA.parse(val)
         return utt2da
 
     def abstract_utterance(self, utterance):
@@ -55,23 +58,23 @@ class PublicTransportCSNLU(Component):
             end = len(utterance)
             while end > start:
                 f = tuple(utterance[start:end])
-                # print start, end
-                # print f
 
+                # found a form
                 if f in self.cldb.form2value2cl:
+                    # use the 1st matching value (XXX there's no good way of disambiguating)
                     for v in self.cldb.form2value2cl[f]:
-                        for c in self.cldb.form2value2cl[f][v]:
-                            abs_utts = abs_utts.replace(list(f), [c.upper() + '=' + v])
-                            abs_utt_lengths[start] = len(f)
-                            category_labels.add(c.upper())
-                            break
-                        else:
+                        # get the categories
+                        c = self.cldb.form2value2cl[f][v]
+                        if not c:  # no categories -- shouldn't happen
                             continue
-
+                        elif len(c) > 1:  # ambiguous categories -- try disambiguating
+                            c = self.disambiguate_category(utterance, start, end, c)
+                        else:
+                            c = c[0]
+                        abs_utts = abs_utts.replace(list(f), [c.upper() + '=' + v])
+                        abs_utt_lengths[start] = len(f)
+                        category_labels.add(c.upper())
                         break
-
-                    # print f
-
                     # skip all substring for this form
                     start = end
                     break
@@ -87,6 +90,26 @@ class PublicTransportCSNLU(Component):
             i += le
         return abs_utts, category_labels, norm_abs_utt_lengths
 
+    def disambiguate_category(self, utterance, start, end, categories):
+        """Disambiguate categories -- stop/city, stop/train or city/train
+        by context, default to 1st one in other cases (which shouldn't happen).
+        """
+        if sorted(categories) == ['city', 'stop']:
+            if utterance[max(0, start - 2):start].any_word_in(
+                    ['zastávka', 'zastávky', 'zastávku', 'zastávce',
+                     'zastávkou', 'stanice', 'stanici', 'stanicí']):
+                return 'stop'
+            return 'city'
+        if 'train_name' in categories and ('city' in categories or 'stop' in categories):
+            if utterance[max(0, start - 1):start].any_word_in(
+                    ['vlak', 'vlakem', 'vlaku', 'vlaky', 'vlaků', 'vlakům', 'vlacích',
+                     'jet', 'jedu', 'jede', 'pojede', 'jezdí', 'jezdit', 'jel', 'ujel',
+                     'jela', 'ujela', 'pojedu', 'jelo', 'ujelo']):
+                return 'train_name'
+            return sorted(categories)[0]
+        else:
+            return categories[0]
+
     def parse_stop(self, abutterance, cn):
         """ Detects stops in the input abstract utterance.
 
@@ -95,13 +118,14 @@ class PublicTransportCSNLU(Component):
         """
 
         # regular parsing
-        phr_wp_types = [('from', set(['z', 'za', 'ze', 'od', 'začátek', 'začáteční',
-                                      'počáteční', 'počátek', 'výchozí', 'start', 'stojím na',
-                                      'jsem na', 'start na', 'stojím u', 'jsem u', 'start u',
-                                      'začátek na', 'začátek u'])),
-                        ('to', set(['k', 'do', 'konec', 'na', 'konečná', 'koncová',
-                                    'cílová', 'cíl', 'výstupní', 'cíl na', 'chci na'])),
-                        ('via', set(['přes', ]))]
+        phr_wp_types = [('from', ['z', 'za', 'ze', 'od', 'začátek na', 'začáteční',
+                                  'počátek na', 'počáteční na', 'výchozí na',
+                                  'počáteční', 'počátek', 'výchozí', 'start na', 'stojím na',
+                                  'jsem na', 'start u', 'stojím u', 'jsem u', 'start',
+                                  'začátek u', 'začátek']),
+                        ('to', ['k', 'do', 'konec', 'na', 'konečná', 'koncová',
+                                'cílová', 'cíl', 'výstupní', 'cíl na', 'chci na']),
+                        ('via', ['přes'])]
 
         self.parse_waypoint(abutterance, cn, 'STOP=', 'stop', phr_wp_types)
 
@@ -113,13 +137,13 @@ class PublicTransportCSNLU(Component):
         """
 
         # regular parsing
-        phr_wp_types = [('from', set(['z', 'ze', 'od', 'začátek', 'začáteční',
-                                      'počáteční', 'počátek', 'výchozí', 'start',
-                                      'jsem v', 'stojím v', 'začátek v'])),
-                        ('to', set(['k', 'do', 'konec', 'na', 'končím',
-                                    'cíl', 'vystupuji', 'vystupuju'])),
-                        ('via', set(['přes', ])),
-                        ('in', set(['pro', 'po'])),
+        phr_wp_types = [('from', ['z', 'ze', 'od', 'začátek', 'začáteční',
+                                  'počáteční', 'počátek', 'výchozí', 'start',
+                                  'jsem v', 'stojím v', 'začátek v']),
+                        ('to', ['k', 'do', 'konec', 'na', 'končím',
+                                'cíl', 'vystupuji', 'vystupuju']),
+                        ('via', ['přes', ]),
+                        ('in', ['pro', 'po']),
                         ]
 
         self.parse_waypoint(abutterance, cn, 'CITY=', 'city', phr_wp_types, phr_in=['v', 've'])
@@ -161,7 +185,7 @@ class PublicTransportCSNLU(Component):
                 wp_types |= self._get_closest_wp_type(wp_precontext)
                 # test short following context (0 = from, 1 = to, 2 = via)
                 if not wp_types:
-                    if u[i:i + 3].any_phrase_in(phr_wp_types[0][1] | phr_wp_types[2][1]):
+                    if u[i:i + 3].any_phrase_in(phr_wp_types[0][1] + phr_wp_types[2][1]):
                         wp_types.add('to')
                     elif u[i:i + 3].any_phrase_in(phr_wp_types[1][1]):
                         wp_types.add('from')
@@ -321,7 +345,7 @@ class PublicTransportCSNLU(Component):
         preps_rel = set(["za", ])
 
         test_context = [('confirm', 'departure',
-                         ['jede to', 'odjíždí to', 'je výchozí', 'má to odjezd', 'je odjezd'],
+                         ['jede to', 'odjíždí to', 'je výchozí', 'má to odjezd', 'je odjezd', 'pojede to'],
                          []),
                         ('confirm', 'arrival',
                          ['přijede to', 'přijíždí to', 'má to příjezd', 'je příjezd'],
@@ -404,15 +428,14 @@ class PublicTransportCSNLU(Component):
         :param abutterance: the input abstract utterance.
         :param da: The output dialogue act item confusion network.
         """
-
         u = abutterance
-
-        confirm = u.phrase_in(['jede', 'to'])
-        deny = u.phrase_in(['nechci', 'ne'])
 
         for i, w in enumerate(u):
             if w.startswith("DATE_REL="):
                 value = w[9:]
+
+                confirm = u[max(i - 5, 0):i].any_phrase_in(['jede to', 'odjíždí to', 'pojede to', 'má to odjezd', 'je odjezd'])
+                deny = u[max(i - 5, 0):i].any_word_in(['nechci', 'ale ne'])
 
                 if confirm:
                     dai = DAI("confirm", 'date_rel', value)
@@ -430,15 +453,13 @@ class PublicTransportCSNLU(Component):
         :param abutterance: the input abstract utterance.
         :param da: The output dialogue act item confusion network.
         """
-
         u = abutterance
-
-        confirm = u.phrase_in(['jede', 'to'])
-        deny = u.phrase_in(['nechci', 'ne'])
 
         for i, w in enumerate(u):
             if w.startswith("AMPM="):
                 value = w[5:]
+                confirm = u[max(i - 5, 0):i].any_phrase_in(['jede to', 'odjíždí to', 'pojede to', 'má to odjezd', 'je odjezd'])
+                deny = u[max(i - 5, 0):i].any_word_in(['nechci', 'ale ne'])
 
                 if not (u.phrase_in('dobrou')):
                     if confirm:
@@ -803,9 +824,10 @@ class PublicTransportCSNLU(Component):
 
         res_da = DA()
 
-        dict_da = self.utt2da.get(str(utterance), None)
+        dict_da = self.utt2da.get(str(utterance).lower(), None)
         if dict_da:
-            return dict_da
+            dial['nlu'] = dict_da
+            return dial
 
         utterance = self.preprocessing.normalize(TokenList(utterance.lower()))
         abutterance, category_labels, abutterance_lenghts = self.abstract_utterance(utterance)
@@ -844,5 +866,6 @@ class PublicTransportCSNLU(Component):
 
             self.parse_meta(utterance, abutterance_lenghts, res_da)
 
+        res_da.merge_duplicate_dais()
         dial['nlu'] = res_da
         return dial

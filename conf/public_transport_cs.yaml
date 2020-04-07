@@ -2,9 +2,13 @@
 # domain from Alex (https://github.com/UFAL-DSG/alex).
 ---
 logging_level: "DEBUG"
+user_stream_type: "dialmonkey.input.text.SimpleJSONInput"
+output_stream_type: "dialmonkey.output.text.FileOutput"
+input_file: "data/public_transport_cs/nlu_test_data.json"
 components:
-  - "dialmonkey.nlu.public_transport_cs.PublicTransportCSNLU": {}
-  - "dialmonkey.policy.dummy.ReplyWithNLU"
+  - dialmonkey.nlu.public_transport_cs.PublicTransportCSNLU:
+      utt2da: "utt2da.tsv"
+  - dialmonkey.policy.dummy.ReplyWithNLU
 break_words:
   - "quit"
   - "exit"
