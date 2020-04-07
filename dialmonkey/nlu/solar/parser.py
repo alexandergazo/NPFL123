@@ -165,6 +165,7 @@ def build_parser():
 
         # Greet
         regex_parser(free_start + rf'(?:hi|hello)' + free_end, 'greet()'),
+        regex_parser(free_start + rf'(?:ask you)' + free_end, 'question_request()'),
         regex_parser(free_start + rf'(?:thanks|thank)' + free_end, 'goodbye(thanks)'),
         regex_parser(free_start + rf'(?:ok|goodbye|that is all)' + free_end, 'goodbye()'),
     )

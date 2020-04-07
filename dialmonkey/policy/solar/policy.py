@@ -173,6 +173,10 @@ class RequestQueryMapper:
         moons = len(planet['moons']) 
         return [('inform', 'count', f'{moons}'), ('inform', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
 
+
+    def question_request(self, context):
+        return ('question_granted', None, None)
+
     def request_moons(self, context):
         name = context.require('name')
         planet = self._find_body(name)
