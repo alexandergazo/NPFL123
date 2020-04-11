@@ -2,7 +2,7 @@
 # dummy NLU. Replace the NLU model with your NLU to test it on
 # the console.
 ---
-logging_level: "ERROR"
+logging_level: "WARN"
 user_stream_type: "dialmonkey.input.text.SimpleJSONInput"
 output_stream_type: "dialmonkey.output.text.FileOutput"
 input_file: "data/hw4_dstc2-nlu-test.json"
