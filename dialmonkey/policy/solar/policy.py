@@ -5,9 +5,9 @@ from dialmonkey.component import Component
 from dialmonkey.dialogue import Dialogue
 from dialmonkey.utils import choose_one
 from dialmonkey.repositories import SolarRepository
+import scipy.constants
 
-km_au = 1.496e8
-ms_g = 9.80665
+km_au = scipy.constants.au / 1000
 
 class RequestQueryMapper:
     def __init__(self, repo):
@@ -58,12 +58,12 @@ class RequestQueryMapper:
             y = self._find_body(name())
             collection = [x for x in collection if x['gravity'] < y['gravity']]
             top_obj = collection.sort(key = lambda x: x['gravity'])
-            top = ('inform', 'min_gravity',f"{collection[0]['gravity'] / ms_g:.1f}g") 
+            top = ('inform', 'min_gravity',f"{collection[0]['gravity'] / scipy.constants.g:.1f}g") 
         elif filter == "higher_gravity":
             y = self._find_body(name())
             collection = [x for x in collection if x['gravity'] > y['gravity']]
             top_obj = collection.sort(key = lambda x: -x['gravity'])
-            top = ('inform', 'max_gravity',f"{collection[0]['gravity'] / ms_g:.1f}g") 
+            top = ('inform', 'max_gravity',f"{collection[0]['gravity'] / scipy.constants.g:.1f}g") 
         else:
             raise ValueError('unknown filter %s' % filter)
         return collection, top 
@@ -106,7 +106,7 @@ class RequestQueryMapper:
         name = context.require('name')
         body = self._find_body(name)
         return [('inform', 'name', body['englishName']),
-            ('inform', 'life', 'yes' if body['isLife'] else 'no'),
+            ('inform', 'life', 'yes' if body['hasLife'] else 'no'),
             ('inform', 'habitable', 'yes' if body['isHabitable'] else 'no'),
             ('inform', 'could_support_life', 'yes' if body['couldSupportLife'] else 'no')]
 
@@ -114,7 +114,7 @@ class RequestQueryMapper:
         name = context.require('name')
         body = self._find_body(name)
         return [('inform', 'name', body['englishName']),
-            ('inform', 'life', 'yes' if body['isLife'] else 'no'),
+            ('inform', 'life', 'yes' if body['hasLife'] else 'no'),
             ('inform', 'habitable', 'yes' if body['isHabitable'] else 'no'),
             ('inform', 'could_support_life', 'yes' if body['couldSupportLife'] else 'no')]
 
@@ -178,7 +178,7 @@ class RequestQueryMapper:
             return [
                 ('inform', 'name', body['englishName']),
                 ('inform', 'radius', f"{body['meanRadius']:.0f}km"),
-                ('inform','gravity',f"{body['gravity']:0.2f}g"),
+                ('inform','gravity',f"{body['gravity'] / scipy.constants.g:0.1f}g"),
                 ('inform', 'mass', f"{body['mass']['massValue']:0.1f} x {body['mass']['massExponent']}"),
             ]
 
@@ -190,7 +190,9 @@ class RequestQueryMapper:
         body = self._find_body(name)
         if property in self._property_map:
             pname, format = self._property_map[property]
-            append_info = [(intent, property, format % body[pname])]
+            if isinstance(format, str):
+                format = lambda x: format % x
+            append_info = [(intent, property, format(body[pname]))]
         elif property == 'discovery':
             append_info = [(intent, 'discovered_by', body['discoveredBy']), (intent, 'discovered_by', body['discoveryDate'])]
         else:

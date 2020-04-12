@@ -1,5 +1,6 @@
 import requests
 from scipy.special import ellipe
+import scipy.constants
 import math
 
 class SolarRepository:
@@ -12,7 +13,7 @@ class SolarRepository:
         self._gas_giants = ['jupiter', 'saturn','uranus','neptune']
         self._habitable_bodies = ['earth']
         self._could_be_habitable = ['earth', 'mars','moon','venus', 'europa']
-        self._human_landed_bodies = ['moon']
+        self._human_landed_bodies = ['moon', 'earth']
         pass 
 
     def bodies(self):
@@ -30,7 +31,7 @@ class SolarRepository:
             b['planetType'] = 'gas_giant'
         elif b['isPlanet']:
             b['planetType'] = 'planet'
-        b['isLife'] = b['englishName'].lower() == 'earth'
+        b['hasLife'] = b['englishName'].lower() == 'earth'
         b['couldSupportLife'] = b['englishName'].lower() in self._could_be_habitable
         b['humansLanded'] = b['englishName'].lower() in self._human_landed_bodies
         b['isHabitable'] = b['englishName'].lower() in self._habitable_bodies
@@ -81,7 +82,7 @@ class SolarRepository:
 
     def properties(self): 
         return dict(
-            gravity=('gravity', '%.1fg'),
+            gravity=('gravity', lambda x: f'{x / scipy.constants.g:.1f}g'),
             radius=('meanRadius', '%.0fkm'),
             size=('meanRadius', '%.0fkm'),
         )

@@ -111,7 +111,7 @@ def build_parser():
         regex_parser(free_start + rf"how{fr} (?P<f>{propertyreg}){fr} <object>" + free_end,lambda f,**k: f'request_property(filter={propertymap[f]},name=<object>)'),
         regex_parser(free_start + rf'how{fr} (?P<f>{propertyreg}){fr} (?:is it|it is)' + free_end,lambda f,**k: f'request_property(property={propertymap[f]})'),
         regex_parser(free_start + rf'how{fr} (?P<f>big,large,far,close,heavy){fr} (?:is it|it is)' + free_end,lambda f,**k: f'request_property(property={f})'),
-        regex_parser(free_start + rf"what is{fr} (?P<f>{propertyval}){fr} of <object>" + free_end,lambda f,**k: f'request_property(property={f},name=<object>)'),
+        regex_parser(free_start + rf"what is{fr} (?P<f>{propertyval}){fr} (?:of|on|in) <object>" + free_end,lambda f,**k: f'request_property(property={f},name=<object>)'),
         regex_parser(free_start + rf'what is{fr} (?P<f>{propertyval})' + free_end,lambda f,**k: f'request_property(property={f})'),
 
 
