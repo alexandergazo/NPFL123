@@ -58,3 +58,11 @@ def test_food_from_empty_slot():
     result['state'] = {k2: { (k if k is not None else 'none'): v for k,v in v2.items() } for k2, v2 in result['state'].items()}
     assert json.dumps(result['state'], sort_keys=True) == json.dumps(dict(test=dict(), food={'none':0.1, 'Italian':0.2,'Chinese':0.7}), sort_keys = True)
     
+
+def test_bugfix10():
+    da = DA.parse('negate()/1.000&negate(area=dontcare)/0.579&negate(type=restaurant)/0.564&negate(food=indian)/0.920')
+    print(da)
+    state = {'food': {None: 0.0684892960121275, 'chinese': 0.9315107039878725}}
+    dst = KulhanekDST()
+    result = dst(dict(nlu = da, state=state), create_logger())
+
