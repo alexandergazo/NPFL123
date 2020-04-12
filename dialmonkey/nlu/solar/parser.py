@@ -46,10 +46,10 @@ def simplify(x):
     x = ' '.join(words)
 
     x = x.replace('n\'t', ' not').replace('\'m', ' am')
-    x = x.replace(' our planet ', ' earth ')
-    x = x.replace(' largest ', ' biggest ')
-    x = x.replace(' larger ', ' bigger ')
-    x = x.replace(' us ', ' earth ')
+    x = re.sub(r'(^|\s)our planet($|\s)', lambda m: m.group(1) + 'earth' + m.group(2), x)
+    x = re.sub(r'(^|\s)largest($|\s)', lambda m: m.group(1) + 'biggest' + m.group(2), x)
+    x = re.sub(r'(^|\s)larger($|\s)', lambda m: m.group(1) + 'bigger' + m.group(2), x)
+    x = re.sub(r'(^|\s)us($|\s)', lambda m: m.group(1) + 'earth' + m.group(2), x)
     return x
 
 # Builds a function which replaces known words with tokens
@@ -74,12 +74,14 @@ def build_parser():
     propertymap = dict(big='size', large='size', far='distance',close='distance', heavy='mass') 
     propertyreg = '|'.join(propertymap.keys())
     propertyval = '|'.join(['gravity'] + list(propertymap.values()))
+    def map_object(x):
+        return x.replace(' ', '_')
     return Sequential(
         # Request planets
-        regex_parser(free_start + rf'(?:which|what) is{fr} (?P<f>biggest|largest|smallest|closest|furthest|heaviest|lightest){fr} (?P<o>planet|body|asteroid|moon)' + free_end,lambda f, o,**k: f'request(filter={f},object={o})'),
-        regex_parser(free_start + rf'(?:what|which){fr} (?P<o>planet|body|asteroid|moon) is{fr} (?P<f>biggest|largest|smallest|closest|furthest|heaviest|lightest)' + free_end,lambda f, o,**k: f'request(filter={f},object={o})'),
-        regex_parser(free_start + rf'what{fr} (?P<o>planet|body|asteroid|moon){fr} greatest mass' + free_end,lambda o,**k: f'request(filter=heaviest,object={o})'),
-        regex_parser(free_start + rf'what{fr} (?P<o>planet|body|asteroid|moon){fr} lowest mass' + free_end,lambda o,**k: f'request(filter=lightest,object={o})'),
+        regex_parser(free_start + rf'(?:which|what) is{fr} (?P<f>biggest|largest|smallest|closest|furthest|heaviest|lightest){fr} (?P<o>planet|body|asteroid|moon|gas giant)' + free_end,lambda f, o,**k: f'request(filter={f},object={map_object(o)})'),
+        regex_parser(free_start + rf'(?:what|which){fr} (?P<o>planet|body|asteroid|moon|gas giant) is{fr} (?P<f>biggest|largest|smallest|closest|furthest|heaviest|lightest)' + free_end,lambda f, o,**k: f'request(filter={f},object={map_object(o)})'),
+        regex_parser(free_start + rf'what{fr} (?P<o>planet|body|asteroid|moon|gas giant){fr} greatest mass' + free_end,lambda o,**k: f'request(filter=heaviest,object={map_object(o)})'),
+        regex_parser(free_start + rf'what{fr} (?P<o>planet|body|asteroid|moon|gas giant){fr} lowest mass' + free_end,lambda o,**k: f'request(filter=lightest,object={map_object(o)})'),
 
         # request life
         regex_parser(free_start + fr'is{fr} life{fr} <object>' + free_end, 'request_life(name=<object>)'), 

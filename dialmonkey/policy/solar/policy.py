@@ -6,6 +6,9 @@ from dialmonkey.dialogue import Dialogue
 from dialmonkey.utils import choose_one
 from dialmonkey.repositories import SolarRepository
 
+km_au = 1.496e8
+ms_g = 9.80665
+
 class RequestQueryMapper:
     def __init__(self, repo):
         self._repo: SolarRepository = repo
@@ -17,30 +20,50 @@ class RequestQueryMapper:
     def goodbye(self, thanks = None):
         return ('exit', None, None)
 
-    def request_travel_time(self, context, name):
+    def request_travel_time(self, context):
+        name = context.require('name')
         body1 = self._find_body(context.try_get('from', 'earth'))
         body2 = self._find_body(name)
         raise DirectResponse(('error', 'not_implemented', None))
 
-    def request_distance(self, context, name):
+    def request_distance(self, context):
+        name = context.require('name')
         body1 = self._find_body(context.try_get('from', 'earth'))
         body2 = self._find_body(name)
-        raise DirectResponse(('error', 'not_implemented', None))
+        min_d, mean_d, max_d = self._repo.measure_distance(body1['id'], body2['id'])
+        return [
+            ('inform','minimal_distance', f"{min_d / km_au:.2f}au"),
+            ('inform','mean_distance', f"{mean_d / km_au:.2f}au"),
+            ('inform','maximal_distance', f"{max_d / km_au:.2f}au"),
+        ]
 
     #
     # Planets
     #
     def _planet_filter(self, collection, name, filter):
-        y = self._find_body(name)
         top = None
-        if filter == 'smaller':
-            collection = [x for x in collection if x['meanRadius'] <= y['meanRadius']]
+        if filter == 'support_life': 
+            collection = [x for x in collection if x['isHabitable'] == True]
+        elif filter == 'smaller':
+            y = self._find_body(name())
+            collection = [x for x in collection if x['meanRadius'] < y['meanRadius']]
             top_obj = collection.sort(key = lambda x: x['meanRadius'])
             top = ('inform', 'min_radius',f"{collection[0]['meanRadius']:.0f}km")
         elif filter == 'larger' or filter == 'bigger':
-            collection = [x for x in collection if x['meanRadius'] >= y['meanRadius']]
+            y = self._find_body(name())
+            collection = [x for x in collection if x['meanRadius'] > y['meanRadius']]
             top_obj = collection.sort(key = lambda x: -x['meanRadius'])
             top = ('inform', 'max_radius',f"{collection[0]['meanRadius']:.0f}km")
+        elif filter == "lower_gravity":
+            y = self._find_body(name())
+            collection = [x for x in collection if x['gravity'] < y['gravity']]
+            top_obj = collection.sort(key = lambda x: x['gravity'])
+            top = ('inform', 'min_gravity',f"{collection[0]['gravity'] / ms_g:.1f}g") 
+        elif filter == "higher_gravity":
+            y = self._find_body(name())
+            collection = [x for x in collection if x['gravity'] > y['gravity']]
+            top_obj = collection.sort(key = lambda x: -x['gravity'])
+            top = ('inform', 'max_gravity',f"{collection[0]['gravity'] / ms_g:.1f}g") 
         else:
             raise ValueError('unknown filter %s' % filter)
         return collection, top 
@@ -49,18 +72,20 @@ class RequestQueryMapper:
         planets = [x for x in self._repo.bodies() if x['isPlanet']]
         result = [('inform', 'count', f'{len(planets)}')]
         if filter is not None:
-            name = context.require('name')
-            planets, top = self._planet_filter(planets, name, filter) 
+            planets, top = self._planet_filter(planets, lambda: context.try_get('name', 'earth'), filter) 
+            result = [('inform', 'count', f'{len(planets)}')]
             if top is not None:
                 result.append(top)
+        if len(planets) == 1:
+            result.append(('inform', 'single_name', planets[0]['englishName']))
         return result
 
     def request_planets(self, context, filter=None): 
         planets = [x for x in self._repo.bodies() if x['isPlanet']]
         result = [('inform', 'count', f'{len(planets)}')]
         if filter is not None:
-            name = context.require('name')
-            planets, top = self._planet_filter(planets, name, filter) 
+            planets, top = self._planet_filter(planets, lambda: context.try_get('name', 'earth'), filter) 
+            result = [('inform', 'count', f'{len(planets)}')]
             if top is not None:
                 result.append(top)
         result.append(('inform', 'names', ','.join([x['englishName'] for x in planets])))
@@ -116,7 +141,7 @@ class RequestQueryMapper:
             elif object == 'solar_body' or object == 'body':
                 pass
             elif object == 'gas_giant':
-                bodies = (x for x in bodies if x['planetType'] == 'gas_giant')
+                bodies = (x for x in bodies if x['isPlanet'] and x['planetType'] == 'gas_giant')
             else: raise ValueError('unknown object type %s' % object)
 
             append_info = None
@@ -132,8 +157,16 @@ class RequestQueryMapper:
             elif filter == 'heaviest':
                 body = min(bodies, key=lambda x: (x['mass']['massExponent'], x['mass']['massValue']))
                 append_info = ('inform', 'mass', f"{body['mass']['massValue']:0.1f} x {body['mass']['massExponent']}")
-            elif filter == 'closest' or filter == 'furthest':
-                return [('not_implemented', None, None)] 
+            elif filter == 'closest':
+                body = min(bodies, key=lambda x: self._repo.measure_distance(x['id'], 'terre')[1])
+                _, distance, _ = self._repo.measure_distance(body['id'], 'terre')
+                append_info = ('inform', 'mean_distance', f"{distance / km_au:0.2f}au") 
+
+            elif filter == 'furthest':
+                body = min(bodies, key=lambda x: -self._repo.measure_distance(x['id'], 'terre')[1])
+                _,distance, _ = self._repo.measure_distance(body['id'], 'terre')
+                append_info = ('inform', 'mean_distance', f"{distance / km_au:0.2f}au") 
+
             else: raise ValueError('unknown filter %s' % filter)
 
             result = [('inform', 'name', body['englishName'])]
@@ -210,6 +243,7 @@ class Context:
         self.intent = intent
         self.values = values
         self.state_values = state_values
+        self.state_change = lambda state: state
 
     def require(self, slot, allow_state = True):
         if slot in self.values: return self.values[slot]
@@ -224,6 +258,14 @@ class Context:
     def try_get_last_count_request(self):
         if '_last_count' in self.state_values:
             return self.state_values['_last_count']
+
+    def push_state(slot, value):
+        change = self.state_change
+        def state_update(state):
+            state = dict(**change(state))
+            state.update({slot: { value: 1.0, None: 0.0 }})
+            return state
+        self.state_change = state_update
 
 class DirectResponse(BaseException):
     def __init__(self, value):
@@ -274,12 +316,8 @@ class SolarPolicy(Component):
 
     def __call__(self, dial: Dialogue, logger):
         response: DA = self._map_call(dial['nlu'], dial['state'])
+        dial.action = response
 
-        # TODO: will fill the response for the next component 
-        # in the pipeline as soon as the Dialogue object
-        # supports it. For now, we will just return the 
-        # response as a string
-        dial.set_system_response(response.to_cambridge_da_string())
         if any((x for x in response.dais if x.intent == 'exit')):
             dial.end_dialogue()
         return dial
