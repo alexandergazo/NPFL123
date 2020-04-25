@@ -39,7 +39,7 @@ class SolarRepository:
 
     def _fix_moons(self, b):
         def fix_moon(m):
-            m['id'] = self._index_from_rel(b['rel'])
+            m['id'] = self._index_from_rel(m['rel'])
             m['moon'] = self._details[m['id']]['englishName']
             return m
         if 'moons' in b and b['moons'] is not None:

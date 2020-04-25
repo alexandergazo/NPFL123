@@ -8,7 +8,7 @@ components:
   - "dialmonkey.nlu.solar.SolarSystemNLU"
   - "dialmonkey.dst.rule_kulhanek.KulhanekDST"
   - "dialmonkey.policy.solar.SolarPolicy"
-  - "dialmonkey.policy.dummy.ReplyWithSystemAction"
+  - "dialmonkey.nlg.solar.SolarNLG"
 break_words:
   - "quit"
   - "exit"
