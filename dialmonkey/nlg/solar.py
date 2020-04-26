@@ -113,7 +113,7 @@ def build_nlg(templates):
         matched_set = prioritized_select(available_set) 
 
         # Return rendered response
-        print(matched_set)
+        assert matched_set, "Could not find any matching template."
         return render_response(da, matched_set)
 
     return lookup
