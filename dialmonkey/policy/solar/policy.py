@@ -32,6 +32,8 @@ class RequestQueryMapper:
         body2 = self._find_body(name)
         min_d, mean_d, max_d = self._repo.measure_distance(body1['id'], body2['id'])
         return [
+            ('inform', 'from', body1['englishName']),
+            ('inform', 'to', body2['englishName']),
             ('inform','minimal_distance', f"{min_d / km_au:.2f}au"),
             ('inform','mean_distance', f"{mean_d / km_au:.2f}au"),
             ('inform','maximal_distance', f"{max_d / km_au:.2f}au"),
@@ -70,10 +72,10 @@ class RequestQueryMapper:
 
     def count_planets(self, context, filter=None): 
         planets = [x for x in self._repo.bodies() if x['isPlanet']]
-        result = [('inform', 'count', f'{len(planets)}')]
+        result = [('inform', 'count', f'{len(planets)}'), ('inform', 'object', 'planet')]
         if filter is not None:
             planets, top = self._planet_filter(planets, lambda: context.try_get('name', 'earth'), filter) 
-            result = [('inform', 'count', f'{len(planets)}')]
+            result[0] = ('inform', 'count', f'{len(planets)}')
             if top is not None:
                 result.append(top)
         if len(planets) == 1:
@@ -82,10 +84,10 @@ class RequestQueryMapper:
 
     def request_planets(self, context, filter=None): 
         planets = [x for x in self._repo.bodies() if x['isPlanet']]
-        result = [('inform', 'count', f'{len(planets)}')]
+        result = [('inform', 'count', f'{len(planets)}'), ('inform', 'object', 'planet')]
         if filter is not None:
             planets, top = self._planet_filter(planets, lambda: context.try_get('name', 'earth'), filter) 
-            result = [('inform', 'count', f'{len(planets)}')]
+            result[0] = ('inform', 'count', f'{len(planets)}')
             if top is not None:
                 result.append(top)
         result.append(('inform', 'names', ','.join([x['englishName'] for x in planets])))
@@ -121,9 +123,9 @@ class RequestQueryMapper:
     def request_best_life_conditions(self):
         habitable = [x for x in self._repo.bodies() if x['isHabitable']]
         bodies = [x for x in self._repo.bodies() if x['couldSupportLife']]
-        return [('inform', 'bodies', ','.join([x['englishName'] for x in habitable])),
-                ('inform', 'count', f'{len(habitable)}'),
-            ('inform', 'could_support_life', ','.join([x['englishName'] for x in bodies]))]
+        return [('inform', 'habitable_bodies', ','.join([x['englishName'] for x in habitable])),
+                ('inform', 'habitable_bodies_count', f'{len(habitable)}'),
+            ('inform', 'life_supportable_bodies', ','.join([x['englishName'] for x in bodies]))]
 
     def request_humans_landed(self, context):
         name = context.require('name')
@@ -169,7 +171,7 @@ class RequestQueryMapper:
 
             else: raise ValueError('unknown filter %s' % filter)
 
-            result = [('inform', 'name', body['englishName'])]
+            result = [('inform', 'name', body['englishName']), ('inform', 'object', object), ('inform', 'filter', filter)]
             if append_info is not None:
                 result.append(append_info)
             return result
@@ -191,8 +193,11 @@ class RequestQueryMapper:
         if property in self._property_map:
             pname, format = self._property_map[property]
             if isinstance(format, str):
-                format = lambda x: format % x
+                format_str = format
+                format = lambda x: format_str % x
             append_info = [(intent, property, format(body[pname]))]
+        elif property == 'mass':
+            append_info = [('inform', 'mass', f"{body['mass']['massValue']:0.1f} x {body['mass']['massExponent']}")]
         elif property == 'discovery':
             append_info = [(intent, 'discovered_by', body['discoveredBy']), (intent, 'discovered_by', body['discoveryDate'])]
         else:
@@ -206,7 +211,7 @@ class RequestQueryMapper:
         name = context.require('name')
         planet = self._find_body(name)
         moons = len(planet['moons']) 
-        return [('inform', 'count', f'{moons}'), ('inform', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
+        return [('inform', 'count', f'{moons}'), ('inform', 'object', 'moon'),('inform', 'names', ','.join((x['moon'] for x in planet['moons'])))]
 
 
     def question_request(self, context):
@@ -216,11 +221,11 @@ class RequestQueryMapper:
         name = context.require('name')
         planet = self._find_body(name)
         moons = len(planet['moons']) 
-        return [('inform', 'count', f'{moons}'), ('inform', 'moons', ','.join((x['moon'] for x in planet['moons'])))]
+        return [('inform', 'count', f'{moons}'), ('inform', 'object', 'moon'), ('inform', 'names', ','.join((x['moon'] for x in planet['moons'])))]
 
     def _find_body(self, name): 
         body = [x for x in self._repo.bodies() if x['englishName'].lower() == name]
-        if len(body) == 0: raise DirectResponse(('error', 'not_found', None))
+        if len(body) == 0: raise DirectResponse([('error', 'not_found', None), ('error', 'name', name)])
         return body[0]
 
 
@@ -289,7 +294,7 @@ class SolarPolicy(Component):
         assert da is not None
         assert isinstance(da, DA)
         assert state is not None
-        if not da.dais: return DA()
+        if not da.dais: return DA([DAI('error', 'not_understood', None)])
 
         dai = [(x.intent, x.confidence) for x in da.dais]
         dai.sort()

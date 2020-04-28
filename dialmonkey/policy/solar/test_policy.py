@@ -27,6 +27,6 @@ def test_does_not_fail(input, output, repo, logger):
 
     assert dial is not None
     assert isinstance(dial, Dialogue)
-    assert dial.system is not None
-    assert dial.system != ''
+    assert dial.action is not None
+    assert dial.action.to_cambridge_da_string() != ''
 
