@@ -127,7 +127,7 @@ class SolarNLG(Component):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        default_filename = os.path.join(os.path.dirname(__file__), '../../data/solar-nlg-templates.yaml')
+        default_filename = os.path.join(os.path.dirname(__file__), '../data/solar-nlg-templates.yaml')
         self._nlg = build_nlg(read_templates(self.config.get('templates_file', default_filename)))
 
     def __call__(self, dial: Dialogue, logger):
