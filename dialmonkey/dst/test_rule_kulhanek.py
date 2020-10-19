@@ -1,4 +1,4 @@
-from .rule_kulhanek import KulhanekDST
+from .rule_solar import SolarRuleDST
 from ..da import DAI, DA
 import pytest
 import json
@@ -8,7 +8,7 @@ def create_logger():
     return logging.getLogger()
 
 def test_food_from_existing():
-    dst = KulhanekDST()
+    dst = SolarRuleDST()
     da = DA()
     da.append(DAI('request', 'food', 'Chinese', 0.7))
     da.append(DAI('request', 'food', 'Italian', 0.2))
@@ -25,7 +25,7 @@ def test_food_from_existing():
     assert json.dumps(result['state'], sort_keys=True) == json.dumps(dict(food={'none':0.08, 'Italian':0.2,'Chinese':0.72}), sort_keys = True)
     
 def test_food_from_empty_state():
-    dst = KulhanekDST()
+    dst = SolarRuleDST()
     da = DA()
     da.append(DAI('request', 'food', 'Chinese', 0.7))
     da.append(DAI('request', 'food', 'Italian', 0.2))
@@ -42,7 +42,7 @@ def test_food_from_empty_state():
     assert json.dumps(result['state'], sort_keys=True) == json.dumps(dict(food={'none':0.1, 'Italian':0.2,'Chinese':0.7}), sort_keys = True)
     
 def test_food_from_empty_slot():
-    dst = KulhanekDST()
+    dst = SolarRuleDST()
     da = DA()
     da.append(DAI('request', 'food', 'Chinese', 0.7))
     da.append(DAI('request', 'food', 'Italian', 0.2))
@@ -63,6 +63,6 @@ def test_bugfix10():
     da = DA.parse('negate()/1.000&negate(area=dontcare)/0.579&negate(type=restaurant)/0.564&negate(food=indian)/0.920')
     print(da)
     state = {'food': {None: 0.0684892960121275, 'chinese': 0.9315107039878725}}
-    dst = KulhanekDST()
+    dst = SolarRuleDST()
     result = dst(dict(nlu = da, state=state), create_logger())
 

@@ -6,7 +6,7 @@ logging_level: "DEBUG"
 user_stream: "dialmonkey.input.console_input.ConsoleInput" 
 components:
   - "dialmonkey.nlu.solar.SolarSystemNLU"
-  - "dialmonkey.dst.rule_kulhanek.KulhanekDST"
+  - "dialmonkey.dst.rule_solar.SolarRuleDST"
   - "dialmonkey.policy.solar.SolarPolicy"
   - "dialmonkey.nlg.solar.SolarNLG"
 break_words:

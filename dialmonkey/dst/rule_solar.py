@@ -3,7 +3,7 @@ from ..da import DAI, DA
 from itertools import groupby
 from collections import defaultdict
 
-class KulhanekDST(Component): 
+class SolarRuleDST(Component):
     def __call__(self, dial, logger):
         if dial['state'] is None: dial['state'] = dict()
         nlu: DA = dial['nlu']
