@@ -1,0 +1,71 @@
+--------------------------------------------------------------------------
+-------------------------- B R E W E R Y  D B ----------------------------
+--------------------------------------------------------------------------
+
+U: Hi. I would like to get some good beer close to me.
+S: Hello, I am happy to help. Where are you located?
+U: In Saint Louis.
+S: Ok, what is your favourite beer?
+U: I don't really have one.
+S: Which taste are you looking for? 
+U: Bitter.
+S: This is a list of 10 most bitter Saint Louis beers:
+U: Okay show me the first brewery information.
+S: Here it is: 123123123
+U: Good bot.
+
+--------------------------------------------------------------------------
+
+U: Hi buddy, show me "Special Bitter or Best Bitter" beers.
+S: Hello, here is the list:
+U: Never heard of the third of one. Give me more info.
+S: It's a dutch brewery and ____.
+U: I don't like Netherlands. What about the fourth beer?
+S: It is ____________.
+U: Good for me.
+U: Show me their contact, please.
+S: Here ___________.
+U: They are unavailable.
+U: The dutch will do, show me their contact.
+S: Here you go:
+U: Thank you.
+
+--------------------------------------------------------------------------
+
+U: Hi can u recommend me a beer?
+S: Sure, what are you looking for?
+U: Something like Stella.
+S: I have found 1234123 beers of the same style as Stella. Do you wish to reorder them?
+U: Ooh, it doesn't matter.
+S: In that case here are the beers that match your description:
+U: Can u restrict them to organic beers only?
+S: Yes, here is the revised list. 
+
+-------------------------------------------------------------------------
+
+U: Hello.
+S: Hi.
+U: What categories of beer do you have please?
+S: Here are the categories.
+U: Show me styles in the category with ID 3.
+S: Here are the styles.
+U: Give me the most bitter beer in the style with id 3.
+S: Here is the beer. 
+U: Give me the most bitter beer in the style with id 3 which is organic.
+S: Here it is.
+U: Thanks.
+
+-------------------------------------------------------------------------
+
+U: Hello.
+S: Hi.
+U: I have this peculiar glass at my home and I am looking for a beer for it.
+S: Can you identify the glass ID from this list?
+U: Yes! It's glass with id 6.
+S: There is 1241234 beers that go well with this glass type.
+S: Do you have any other narrowing description?
+U: Yes. Show me the one with highest alcohol content and is organic.
+S: Here it is.
+U: Thank you. Show me the brewery webpage.
+S: Here.
+U: Good bot.
