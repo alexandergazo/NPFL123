@@ -1,0 +1,11 @@
+# A config useful for testing NLU systems -- now set up with the
+# dummy NLU. Replace the NLU model with your NLU to test it on
+# the console.
+---
+logging_level: "WARN"
+components:
+    - "dialmonkey.nlu.hw03RuleBased.RuleBased"
+    - "dialmonkey.policy.dummy.ReplyWithNLU"
+break_words:
+    - "quit"
+    - "exit"
