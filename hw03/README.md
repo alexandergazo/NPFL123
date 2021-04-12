@@ -33,5 +33,5 @@
 
 ### Examples
 
-The last three examples in `examples.tsv` assume that there exists a context with time_range and tweet set specified preceding the utterance.
+The last three examples in `examples.tsv` assume that there exists a context with a time_range and a tweet set, specified preceding the utterance.
 

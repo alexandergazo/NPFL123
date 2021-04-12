@@ -4,6 +4,9 @@ import re
 
 class RuleBased(Component):
     def __call__(self, dial, logger):
+        # I do realize that copying the regexes two times and not compiling it is a very
+        # bad coding practice but since that isn't the goal of this assignment I decided to
+        # invest the effort to other parts of the assignment
         if any([w in dial.user.split() for w in ['hello', 'hey', 'hi']]):
             dial.nlu.append(DAI('greet'))
         elif any([w in dial.user.split() for w in ['bye', 'goodbye', 'good bye', 'see ya', 'see you']]):
