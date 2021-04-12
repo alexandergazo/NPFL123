@@ -19,18 +19,19 @@
 - show_tweet
 - swow_tweeting_themes_of_user
 - show_keyword_frequency_in_user_category
-- show_user
+- search_user
 
 ### Slots - Values
 
 - user - any valid twitter @
 - keyword - any string
-- theme - any string
+- theme - any word
 - user_category - any string
 - time_range - {this year, last year, last month, this month, ...}
 - pick_metric - {most RT, most likes, most recent}
+- query - any string
 
 ### Examples
 
-The last three examples assume that there exists a context with time_range and tweet set specified preceding the utterance.
+The last three examples in `examples.tsv` assume that there exists a context with time_range and tweet set specified preceding the utterance.
 
