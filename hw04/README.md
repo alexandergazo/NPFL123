@@ -5,12 +5,12 @@ I use TF-IDF and up to 4-grams and classic LogisticRegresison with balanced clas
 |Metric|Score|
 |-|-|
 |PRECISION:|0.970|
-|RECALL:|0.964|
+|RECALL:|0.965|
 |F-1:|0.967|
 
 ### Usage
 
-Probably should run it from hw04 folder as I did not pay attention to safe addresses.
+Probably should run it from `hw04` directory as I did not pay attention to safe addresses.
 
 To train and save the model use
 
@@ -24,5 +24,5 @@ This option is in my experience way faster than using `run_dialmonkey.py`.
 
 ### Future Work
 
-The model could be represented as one pipline object instead of five distinct objects and also the methods for prediction should be implemented.
+The model could be represented as one pipline object instead of five distinct objects and also single method for predicting should be implemented.
 

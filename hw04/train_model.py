@@ -4,7 +4,6 @@ import pickle
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-from sklearn.metrics import f1_score as f1
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -30,7 +29,7 @@ def load_data(path: str):
     with open(path, 'r') as data_file:
         json_data = json.load(data_file)
     X, X2, Y = [], [], []
-    labels = defaultdict(set)
+    labels = defaultdict(set) # TODO replace with set()
     for dictionary in json_data:
         X.append(dictionary['usr'])
         auxX, auxY = [], []
@@ -40,20 +39,6 @@ def load_data(path: str):
             auxY.append(x.value or NOVAL_TOKEN)
         X2.append(auxX)
         Y.append(auxY)
-    return (X, X2), Y, labels
-
-
-def load_data2(path: str):
-    with open(path, 'r') as data_file:
-        json_data = json.load(data_file)
-    X, X2, Y = [], [], []
-    labels = defaultdict(set)
-    for dictionary in json_data:
-        for x in DA.parse_cambridge_da(dictionary['DA']):
-            labels[(x.intent, x.slot or NOVAL_TOKEN)].add(x.value or NOVAL_TOKEN)
-            X.append(dictionary['usr'])
-            X2.append((x.intent, x.slot or NOVAL_TOKEN))
-            Y.append(x.value or NOVAL_TOKEN)
     return (X, X2), Y, labels
 
 

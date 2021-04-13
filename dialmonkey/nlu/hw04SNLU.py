@@ -10,7 +10,6 @@ import numpy as np
 class SNLU(Component):
     """A dummy example NLU that is able to parse common greetings."""
     def __init__(self, *args, **kwargs):
-        # TODO make as one object in train_model and implement predict method
         C = 10000
         model_path = 'dialmonkey/nlu/statistical_model/snlu'
         with lzma.open(model_path + f".C{C}" + ".model", "rb") as model_file:

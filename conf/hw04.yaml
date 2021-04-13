@@ -1,7 +1,3 @@
-# A config useful for testing NLU systems -- now set up with the
-# dummy NLU. Replace the NLU model with your NLU to test it on
-# the console.
----
 logging_level: "WARN"
 user_stream_type: "dialmonkey.input.text.SimpleJSONInput"
 output_stream_type: "dialmonkey.output.text.FileOutput"
