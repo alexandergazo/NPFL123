@@ -1,0 +1,66 @@
+-------------------------------------------------------------------------
+---------------------------- T W I T T E R ------------------------------
+-------------------------------------------------------------------------
+
+U: Hello.
+S: Hi.
+U: I was wondering how prevalent is the keyword "covid" in the last week.
+S: The "covid" keyword appeared 60% more than in the previous week and 120% than a week before that.
+U: Who tweeted the most about it?
+S: Twitter profile "CNN".
+U: Read me their most recent tweet with the keyword.
+S: "..."
+U: And one before that.
+S: "..."
+
+-------------------------------------------------------------------------
+
+U: Hey.
+S: Hi.
+U: What theme is Kamala Harris tweeting about the most in the last month?
+S: According to my analysis the most prominent themes are covid and Joe Biden with 1000 and 900 occurrences respectively.
+U: What do you mean by the covid theme.
+S: I mark a tweet as belonging in the covid theme if it contains any of the following keywords: "vacc", "covid", "coron", "pfizer", ...
+U: Add a keyword "Johnson" to that list.
+S: Ok, I added the keyword "Johnson" to the covid theme.
+U: Super, thank you.
+
+-------------------------------------------------------------------------
+
+U: Howdy.
+S: Hello.
+U: What user categories do you currently follow?
+S: USA politician, UK politicians, UK news-sources and USA news-sources.
+U: Who do you have in the USA politician category?
+S: Bill Clinton and 34 others? Should I name them all?
+U: Yes please.
+S: ...
+U: Remove Mr Kirk from the list, please.
+S: Ok, I removed Kirk from the USA politicians list.
+U: Thank you.
+
+-------------------------------------------------------------------------
+
+U: Hello.
+S: Hello.
+U: What is the most frequent keyword this month over all categories?
+S: It is the word "children".
+U: That is unexpected. Read me the most popular one, please.
+S: This is a tweet from CNN twitter account with 1234 retweets: "The children in Slovakia celebrated one year anniversary of online learning."
+U: What is the most frequent keyword in USA news-sources?
+S: It is ____.
+U: Thank you.
+
+-------------------------------------------------------------------------
+
+U: Hello.
+S: Hi.
+U: How many tweets about coronavirus has Biden tweeted in the January of 2019? 
+S: It was exactly 19, not counting the deleted ones.
+U: What is the most retweeted one of them?
+S: It is this one: "__________"
+U: What is the least retweeted one?
+S: This one with 2 retweets: "________".
+U: How about Hillary Clinton?
+S: The least retweeted tweet from January 2019 by Hillary Clinton was: "_______".
+U: Thank you.
