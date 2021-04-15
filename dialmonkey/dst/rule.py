@@ -6,24 +6,20 @@ from collections import defaultdict
 class DST(Component):
     def __call__(self, dial, logger):
         if dial.state is None: dial.state = dict()
-        nlu: DA = dial.nlu
-        # ignore intents I guess from the assignment
-        slot_value_p = [(x.slot, x.value, x.confidence) for x in nlu.dais]
-        slot_value_p.sort(key=lambda x: tuple(map(str, x)))
+        dais_tuple = [(x.intent, x.slot, x.value, x.confidence) for x in dial.nlu.dais]
+        dais_tuple.sort(key=lambda x: tuple(map(str, x)))
 
-        # I don't think the slot confidence should be summed up, but this
-        # should not occur in the data
-        # slot_value_p = [(slot, value, sum(map(lambda x: x[-1], x))) for (slot,value), x in groupby(slot_value_p, key=lambda x: tuple(map(str, x[:-1])))]
+        for intent, i_s_v_p in groupby(dais_tuple, key=lambda x: str(x[0])):
+            if not intent in dial.state: dial.state[intent] = {}
+            s_v_p = list(map(lambda x: x[1:], i_s_v_p))
+            for slot, values in groupby(s_v_p, key=lambda x: str(x[0])):
+                if not slot in dial.state[intent]: dial.state[intent][slot] = { None: 1.0 }
+                conf = dial.state[intent][slot]
+                value_conf = { s: p for _, s, p in values }
+                value_conf[None] = 1.0 - sum(value_conf.values())
+                for key in set(value_conf.keys()).union(set(conf.keys())):
+                    conf[key] = conf.get(key, 0.0) * value_conf[None] + value_conf.get(key, 0.0)
+                conf[None] = 0.0
+                conf[None] = 1.0 - sum(conf.values())
 
-        for slot, values in groupby(slot_value_p, key=lambda x: str(x[0])):
-            if not slot in dial.state: dial.state[slot] = { None: 1.0 }
-            conf = dial.state[slot]
-            value_conf = { s: p for _, s, p in values }
-            value_conf[None] = 1.0 - sum(value_conf.values())
-            for key in set(value_conf.keys()).union(set(conf.keys())):
-                conf[key] = conf.get(key, 0.0) * value_conf[None] + value_conf.get(key, 0.0)
-            conf[None] = 0.0
-            conf[None] = 1.0 - sum(conf.values())
-
-        logger.info('State: %s', str(dial['state']))
         return dial
