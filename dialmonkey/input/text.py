@@ -40,11 +40,13 @@ class PlainFileInput(FileInput):
     """Input from a file, default to standard input (one turn per line)."""
 
     def __init__(self, config=None):
+        self.tsv = False
         self.input_fd = sys.stdin
         self._len = 0
         self.config = config
         # input is not from standard input
         if self.config and 'input_file' in self.config and self.config['input_file'] not in ['', '-']:
+            self.tsv = self.config['input_file'].split('.')[-1] == 'tsv'
             self.input_fd = open(self.config['input_file'], 'r', encoding='UTF-8')
             self._len = sum(1 for _ in self.input_fd)
             self.input_fd.seek(0)
@@ -54,6 +56,7 @@ class PlainFileInput(FileInput):
         line = self.input_fd.readline()
         if line == '':  # EOF hit
             return None
+        if self.tsv: line = line.split('\t')[0]
         return line.strip().lower()
 
     def __len__(self):
