@@ -1,0 +1,12 @@
+logging_level: "WARN"
+user_stream_type: "dialmonkey.input.text.SimpleJSONInput"
+output_stream_type: "dialmonkey.output.text.FileOutput"
+input_file: "hw04/data/dstc2-nlu-dev-20l.json"
+output_file: "hw05/outputs_dstc2.txt"
+components:
+  - "dialmonkey.nlu.hw05SNLU.SNLU"
+  - "dialmonkey.dst.rule.DST"
+  - "dialmonkey.policy.dummy.ReplyWithState"
+break_words:
+  - "quit"
+  - "exit"
