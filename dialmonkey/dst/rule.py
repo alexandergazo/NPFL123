@@ -7,15 +7,13 @@ class DST(Component):
     def __call__(self, dial, logger):
         if dial.state is None: dial.state = dict()
         nlu: DA = dial.nlu
-        # ignore intents I guess from the assignment
-        slot_value_p = [(x.slot, x.value, x.confidence) for x in nlu.dais]
+
+        # ignore other intents than inform, as suggested in slack
+        slot_value_p = [(x.slot, x.value, x.confidence) for x in nlu.dais if x.intent == 'inform']
         slot_value_p.sort(key=lambda x: tuple(map(str, x)))
 
-        # I don't think the slot confidence should be summed up, but this
-        # should not occur in the data
-        # slot_value_p = [(slot, value, sum(map(lambda x: x[-1], x))) for (slot,value), x in groupby(slot_value_p, key=lambda x: tuple(map(str, x[:-1])))]
-
         for slot, values in groupby(slot_value_p, key=lambda x: str(x[0])):
+            if slot == 'None': continue
             if not slot in dial.state: dial.state[slot] = { None: 1.0 }
             conf = dial.state[slot]
             value_conf = { s: p for _, s, p in values }
@@ -25,5 +23,4 @@ class DST(Component):
             conf[None] = 0.0
             conf[None] = 1.0 - sum(conf.values())
 
-        logger.info('State: %s', str(dial['state']))
         return dial
