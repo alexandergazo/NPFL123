@@ -24,3 +24,28 @@ class DST(Component):
             conf[None] = 1.0 - sum(conf.values())
 
         return dial
+
+
+class TwitterDST(Component):
+    def __call__(self, dial, logger):
+        if dial.state is None: dial.state = dict()
+        nlu: DA = dial.nlu
+
+        slot_value_p = [(x.slot, x.value, x.confidence) for x in nlu.dais]
+        slot_value_p.sort(key=lambda x: tuple(map(str, x)))
+
+        for slot, values in groupby(slot_value_p, key=lambda x: str(x[0])):
+            if slot == 'None': continue
+            if not slot in dial.state: dial.state[slot] = { None: 1.0 }
+            values = list(values)
+            probs = list(map(lambda x: x[2], values))
+            probs = [p / sum(probs) for p in probs]
+            conf = dial.state[slot]
+            value_conf = { s: p for (_, s, _), p in zip(values, probs)}
+            value_conf[None] = 1.0 - sum(value_conf.values())
+            for key in set(value_conf.keys()).union(set(conf.keys())):
+                conf[key] = conf.get(key, 0.0) * value_conf[None] + value_conf.get(key, 0.0)
+            conf[None] = 0.0
+            conf[None] = 1.0 - sum(conf.values())
+
+        return dial
