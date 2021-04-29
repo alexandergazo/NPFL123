@@ -1,5 +1,5 @@
-#user_stream_type: "dialmonkey.input.text.PlainFileInput"
-#input_file: "hw03/examples.tsv"
+# user_stream_type: "dialmonkey.input.text.PlainFileInput"
+# input_file: "hw03/examples.tsv"
 logging_level: "WARN"
 components:
     - "dialmonkey.nlu.hw03RuleBased.RuleBased"
