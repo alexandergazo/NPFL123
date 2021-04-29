@@ -40,7 +40,7 @@ class RuleBased(Component):
             s = re.search(r"\badd (?P<query>.*) to (the )?(?P<cat>.*?)( user category| category)?$", dial.user)
             dial.nlu.append(DAI('search_user', 'query', s.group('query')))
             dial.nlu.append(DAI('add_user_to_category', 'user', 'RESULT'))
-            dial.nlu.append(DAI('add_user_to_category', 'category', s.group('cat')))
+            dial.nlu.append(DAI('add_user_to_category', 'user_category', s.group('cat')))
         elif re.search(r"\b(list|show me|display|show).*in (the )?(?P<cat>.*?)( user category| category)?$", dial.user):
             s = re.search(r"\b(list|show me|display|show).*in (the )?(?P<cat>.*?)( user category| category)?$", dial.user)
             dial.nlu.append(DAI('show_users_in_category', 'category', s.group('cat')))

@@ -12,11 +12,11 @@ def check_assigned(keywords):
     return da
 
 
-def greet():
+def greet(**kwargs):
     return [DAI('greet')]
 
 
-def goodbye():
+def goodbye(**kwargs):
     return [DAI('bye')]
 
 
@@ -39,11 +39,11 @@ def show_theme_keywords(theme=None):
 
 
 def show_user_categories():
-    return [DAI('inform', 'category', 'czech politicians'),
-            DAI('inform', 'category', 'artists')]
+    return [DAI('inform', 'user_category', 'czech politicians'),
+            DAI('inform', 'user_category', 'artists')]
 
 
-def show_users_in_category(category=None):
+def show_users_in_category(user_category=None):
     da = check_assigned(locals())
     if da: return da
 
@@ -51,28 +51,28 @@ def show_users_in_category(category=None):
             DAI('inform', 'user', 'tomas')]
 
 
-def add_user_to_category(category=None, user=None):
+def add_user_to_category(user_category=None, user=None):
     da = check_assigned(locals())
     if da: return da
 
     return [DAI('success')]
 
 
-def remove_user_from_category(category=None, user=None):
+def remove_user_from_category(user_category=None, user=None):
     da = check_assigned(locals())
     if da: return da
 
     return [DAI('success')]
 
 
-def add_user_category(category=None, user=None):
+def add_user_category(user_category=None, user=None):
     da = check_assigned(locals())
     if da: return da
 
     return [DAI('success')]
 
 
-def remove_user_category(category=None, user=None):
+def remove_user_category(user_category=None, user=None):
     da = check_assigned(locals())
     if da: return da
 
