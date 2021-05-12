@@ -1,13 +1,14 @@
-# user_stream_type: "dialmonkey.input.text.PlainFileInput"
-# output_stream_type: "dialmonkey.output.text.FileOutput"
-# input_file: "hw03/examples.tsv"
-# output_file: "hw06/outputs.txt"
+user_stream_type: "dialmonkey.input.text.PlainFileInput"
+input_file: "hw03/examples.tsv"
+output_stream_type: "dialmonkey.output.text.FileOutput"
+output_file: "hw08/outputs.txt"
 logging_level: "WARN"
 components:
     - "dialmonkey.nlu.hw03RuleBased.RuleBased"
     - "dialmonkey.dst.rule.TwitterDST"
     - "dialmonkey.policy.twitter.TwitterPolicy"
     - "dialmonkey.policy.dummy.ReplyWithSystemAction"
+    - "dialmonkey.nlg.twitter.TemplateNLG"
 break_words:
     - "quit"
     - "exit"
