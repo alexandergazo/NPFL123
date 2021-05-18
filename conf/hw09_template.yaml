@@ -1,0 +1,13 @@
+special_stream_type: "dialmonkey.telegram_IO.TelegramIO"
+telegram:
+    token: ""
+logging_level: "DEBUG"
+components:
+    - "dialmonkey.nlu.hw03RuleBased.RuleBased"
+    - "dialmonkey.dst.rule.TwitterDST"
+    - "dialmonkey.policy.twitter.TwitterPolicy"
+    - "dialmonkey.policy.dummy.ReplyWithSystemAction"
+    - "dialmonkey.nlg.twitter.TemplateNLG"
+break_words:
+    - "quit"
+    - "exit"
