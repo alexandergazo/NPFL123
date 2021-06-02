@@ -1,0 +1,45 @@
+# intent((variable)={different|possible|values})
+greet():
+    - Hello.
+    - Welcome to the twitter theme analyst.
+    - Welcome!
+    - Hi.
+    - Good Morning.
+bye():
+    - Goodbye!
+    - Goodbye, have a nice day!
+    - Have a nice day!
+    - Bye.
+    - See you soon!
+    - Nice talking to you. Bye!
+success():
+    - Done.
+    - Okay. What can I do for you next?
+    - Is there anything else I can help you with?
+inform({theme|user_category|user|keyword}=[list]):
+    - "The available {themes|user categories|users|keywords} are: [list]."
+    - "This is the list of available {themes|user categories|users|keywords}: [list]."
+inform(user_category=[user_categories]):
+    - "The available user categories are: [user_categories]."
+    - "This is the list of available user categories: [user_categories]."
+inform(msg=(msg)):
+    - "(msg)"
+inform(frequency=(f)):
+    - The frequency of the keyowrd is (f).
+    - The frequency is (f).
+    - (f).
+inform(tweet_text=(txt)):
+    - "This is the text of the tweet: (txt)"
+ask_user((lol)):
+    - Can you repeat (lol)?
+    - What is the (lol)?
+    - I need to know your desired (lol).
+resolve():
+    - ""
+warn(unknown=user_category):
+    - "I do not have such a user category."
+    - "I do not follow this category of users."
+    - "I do not recognize this user category."
+warn(unknown=(lol)):
+    - "I do not have such a (lol)."
+    - "I do not recognize this (lol)."
