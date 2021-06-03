@@ -22,23 +22,28 @@ class ConversationHandler(object):
             if 'history_fn' not in self.config else self.config['history_fn']
         self.should_continue = should_continue if should_continue is not None else lambda _: True
 
-        # setup input stream
-        if 'user_stream_type' not in self.config:
-            self.config['user_stream_type'] = 'dialmonkey.input.text.ConsoleInput'
-        try:
-            self.user_stream = dynload_class(self.config['user_stream_type'])(self.config)
-        except Exception as e:
-            self.logger.error('Could not load class "%s"', self.config['user_stream_type'])
-            raise e
+        if 'special_stream_type' in self.config:
+            io = dynload_class(self.config['special_stream_type'])(**self.config)
+            self.user_stream = io.input
+            self.output_stream = io.output
+        else:
+            # setup input stream
+            if 'user_stream_type' not in self.config:
+                self.config['user_stream_type'] = 'dialmonkey.input.text.ConsoleInput'
+            try:
+                self.user_stream = dynload_class(self.config['user_stream_type'])(self.config)
+            except Exception as e:
+                self.logger.error('Could not load class "%s"', self.config['user_stream_type'])
+                raise e
 
-        # setup output stream
-        if 'output_stream_type' not in self.config:
-            self.config['output_stream_type'] = 'dialmonkey.output.text.ConsoleOutput'
-        try:
-            self.output_stream = dynload_class(self.config['output_stream_type'])(self.config)
-        except Exception as e:
-            self.logger.error('Could not load class "%s"', self.config['output_stream_type'])
-            raise e
+            # setup output stream
+            if 'output_stream_type' not in self.config:
+                self.config['output_stream_type'] = 'dialmonkey.output.text.ConsoleOutput'
+            try:
+                self.output_stream = dynload_class(self.config['output_stream_type'])(self.config)
+            except Exception as e:
+                self.logger.error('Could not load class "%s"', self.config['output_stream_type'])
+                raise e
 
         self._load_components()
         self._reset()
