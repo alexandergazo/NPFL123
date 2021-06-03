@@ -35,10 +35,3 @@ class TelegramIO:
         update.message.reply_text(self._output)
         self._output = None
 
-
-def main():
-    token = load_conf("server.yaml")['telegram']['token']
-
-
-if __name__ == "__main__":
-    main()
